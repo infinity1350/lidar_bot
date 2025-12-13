@@ -19,11 +19,11 @@ namespace motor_test
 
         cfg_.left_wheel_name = info_.hardware_parameters["left_wheel_name"];
         cfg_.right_wheel_name = info_.hardware_parameters["right_wheel_name"];
-        cfg_.counts_per_rev = std::stoi(info_.hardware_parameters["counts_per_rev"]);
+        cfg_.counts_per_rev = std::stoi(info_.hardware_parameters["enc_counts_per_rev"]);
         cfg_.loop_rate = std::stof(info_.hardware_parameters["loop_rate"]);
         cfg_.device = info_.hardware_parameters["device"];
         cfg_.baudrate = std::stoi(info_.hardware_parameters["baudrate"]);
-        cfg_.timeout = std::stoi(info_.hardware_parameters["timeout"]);
+        cfg_.timeout = std::stoi(info_.hardware_parameters["timeout_ms"]);
         
         if(info_.hardware_parameters.count("k_p") > 0)
         {
@@ -59,12 +59,12 @@ namespace motor_test
                 RCLCPP_ERROR(rclcpp::get_logger("DiffDriveHardware"), "Joint '%s' has %zu state interfaces found. 1 expected.", joint.name.c_str(), joint.state_interfaces.size());
                 return hardware_interface::CallbackReturn::ERROR;
             }
-            if(joint.state_interfaces[1].name != hardware_interface::HW_IF_VELOCITY)
+            if(joint.state_interfaces[0].name != hardware_interface::HW_IF_VELOCITY)
             {
                 RCLCPP_ERROR(rclcpp::get_logger("DiffDriveHardware"), "Joint '%s' has '%s' as state interface. '%s' expected.", joint.name.c_str(), joint.state_interfaces[1].name.c_str(), hardware_interface::HW_IF_VELOCITY);
                 return hardware_interface::CallbackReturn::ERROR;
             }
-            if(joint.state_interfaces[0].name != hardware_interface::HW_IF_POSITION)
+            if(joint.state_interfaces[1].name != hardware_interface::HW_IF_POSITION)
             {
                 RCLCPP_ERROR(rclcpp::get_logger("DiffDriveHardware"), "Joint '%s' has '%s' as state interface. '%s' expected.", joint.name.c_str(), joint.state_interfaces[0].name.c_str(), hardware_interface::HW_IF_POSITION);
                 return hardware_interface::CallbackReturn::ERROR;
