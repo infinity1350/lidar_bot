@@ -1,0 +1,9 @@
+<library path="motor_test_hardware_interface">
+  <class name="motor_test/DiffDriveHardware" 
+         type="motor_test::DiffDriveHardware" 
+         base_class_type="hardware_interface::SystemInterface">
+    <description>
+      Differential drive hardware interface for motor test
+    </description>
+  </class>
+</library>

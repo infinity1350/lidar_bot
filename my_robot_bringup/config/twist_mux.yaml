@@ -1,0 +1,42 @@
+twist_mux:
+  ros__parameters:
+    # Use stamped messages to match controller
+    use_stamped: true
+    
+    topics:
+      # Keyboard teleop - lowest priority for manual control
+      keyboard:
+        topic: cmd_vel
+        timeout: 0.5
+        priority: 10
+      
+      # Joystick/gamepad - higher priority than keyboard
+      joystick:
+        topic: joy_vel
+        timeout: 0.5
+        priority: 20
+        
+      # Navigation stack - high priority for autonomous driving
+      navigation:
+        topic: nav_vel
+        timeout: 1.0
+        priority: 50
+        
+      # Safety/Emergency stop - highest priority
+      safety:
+        topic: safety_vel
+        timeout: 0.1
+        priority: 100
+    
+    # QoS settings to match controller
+    qos_overrides:
+      /diff_drive_controller/cmd_vel:
+        reliability: best_effort
+    
+    # Locks - allow certain topics to disable others
+    locks:
+      # Safety lock can disable everything
+      safety_lock:
+        topic: safety_lock
+        timeout: 2.0
+        priority: 255
