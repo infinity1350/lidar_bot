@@ -3,6 +3,23 @@
 
 namespace planning
 {
+    struct GraphNode
+    {
+        int x;
+        int y;
+        int cost;
+        std::shared_ptr<GraphNode> prev;
+
+        GraphNode(int in_x, int in_y) : x(in_x), y(in_y),cost(0);
+        {
+        }
+
+        GraphNode() : GraphNodede(0,0)
+        {
+        }
+
+        bool operator
+    }
     public:
         DijkstraPlanner::DijkstraPlanner() : Node("dijkstra_planner")
         {
@@ -66,8 +83,19 @@ namespace planning
                 path->publish(path)
             }
         }
-        nav_msgs::msg::Path DijkstraPlanner(const nav_msgs::smg::PoseStamped pose, nav_msgs::msg::P)
+        nav_msgs::msg::Path DijkstraPlanner(const nav_msgs::smg::PoseStamped& start, 
+            nav_msgs::msg::PoseStamped& stop)
+        {
+            
+        }
 
+}
 
-
+int main()
+{
+    rclcpp::init(argc, argv);
+    auto node = std::make_shared<planning::DijkstraPlanner>();
+    rclcpp::spin();
+    rclcpp::shutdown();
+    return 0;
 }
