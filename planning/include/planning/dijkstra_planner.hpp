@@ -27,6 +27,8 @@ class DijkstraPlanner : public rclcpp:Node
 
         void mapCallback(const nav_msgs::msg::OccupancyGrid:SharedPtr msg);
         void poseCallback(const geometry_msgs::msg::PoseStamped:SharedPtr msg);
+
+        GraphNode worldToGrid(const geometry_msgs::msg::Pose & pose);
         
         nav_msgs::msg::Path Plan(const geometry_msgs:msg::PoseStamped& start, const geometry_msgs::msg::PoseStamped& goal);
 

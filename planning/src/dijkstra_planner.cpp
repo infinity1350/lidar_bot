@@ -1,4 +1,8 @@
 #include "planning/dijkstra_planner.hpp"
+#include <vector>
+#include <rmw/qos_profiles.h>
+#include <geometry_msgs/msg/transform_stamped.hpp>
+#include <queue>
 
 
 namespace planning
@@ -14,11 +18,19 @@ namespace planning
         {
         }
 
-        GraphNode() : GraphNodede(0,0)
+        GraphNode() : GraphNodede(0,0) 
         {
         }
 
-        bool operator
+        bool operator > (const GraphNode& other)const
+        {
+            return cost > other.cost;
+        }
+
+        bool operator == ( const GraphNode& node) const 
+        {
+            return cost == other.cost;
+        }
     }
     public:
         DijkstraPlanner::DijkstraPlanner() : Node("dijkstra_planner")
@@ -86,7 +98,22 @@ namespace planning
         nav_msgs::msg::Path DijkstraPlanner(const nav_msgs::smg::PoseStamped& start, 
             nav_msgs::msg::PoseStamped& stop)
         {
+            std::vector<std::pair<int, int>> explore_directions = {{-1, 0}, {1, 0}, { 1, 1}, {-1, -1}};
+            std::priority_queue <GraphNode, std::vector<GraphNodes>, std::greater(GraphNode)> pending_nodes;
+            std::priority_queue <GraphNode> visited_nodes; 
             
+            nav_msgs::msg::Path path;
+
+
+            
+        }
+
+        GraphNode DijkstraPlanner::worldToGrid(const geometry_msgs::msg::Pose & pose )
+        {
+            int grid_x = (pose.position.x - map_.info.origin.position.x) / ;
+
+            return GraphNode(int in_x, int in_y);
+
         }
 
 }
