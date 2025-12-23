@@ -120,18 +120,11 @@ namespace planning
                 for(const auto dir : explore_directions)
                 {
                     GraphNode new_node = active_node + dir;
-                    
-                    
+                    if        
 
                 }
 
             }
-
-            
-
-            
-
-
             
         }
 
