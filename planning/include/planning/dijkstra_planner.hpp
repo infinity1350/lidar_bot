@@ -1,14 +1,15 @@
 #include "rclcpp/rclcpp.hpp"
 #include "nav_msgs/msg/occupancy_grid.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
-
+#include "nav_msgs/msg/path.hpp"
+#include "geometry_msgs/msg/pose.hpp"
 #include "tf2_ros/transform_listener.h"
 #include "tf2_ros/buffer.h"
 
 
 namspace planning
 {
-class DijkstraPlanner : public rclcpp:Node
+class DijkstraPlanner : public rclcpp::Node
 {
     public:
         DijkstraPlanner();

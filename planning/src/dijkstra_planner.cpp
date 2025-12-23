@@ -160,12 +160,11 @@ namespace planning
         {
             geometry_msgs::msg::Pose pose;
             pose.position.x = node.x * map_.info.resolution + map_.info.origin.position.x;
-            pose.position.y = mode.y * map_.info.resolution + map_.info.origin.position.y;
-        
+            pose.position.y = node.y * map_.info.resolution + map_.info.origin.position.y;
             return pose;
         }
 
-        bool poseOnMap(const GraphNode & node)
+        bool DijkstraPlanner::poseOnMap(const GraphNode & node)
         {
             return node.x >= 0 && node.x <= static_cast<int>(map_.info.width) &&
                 node.y >= 0 && node.y <= static_cast<int>(map_.info.height);
@@ -173,7 +172,7 @@ namespace planning
 
         unsigned int DijkstraPlanner::poseToCell(const GraphNode & node)
         {
-            
+            return node.
         }
 
 }
