@@ -55,7 +55,7 @@ namespace planning
 
         }
 
-        void DijsktraPlanner::mapCallback(const nav_msgs::msg::OccuoancyGrid::SharedPtr msg)
+        void DijkstraPlanner::mapCallback(const nav_msgs::msg::OccuoancyGrid::SharedPtr msg)
         {
             map_ = map;
             visited_map_.header.frame_id = map_->header.frame_id;
@@ -95,8 +95,8 @@ namespace planning
                 path->publish(path)
             }
         }
-        nav_msgs::msg::Path DijkstraPlanner(const nav_msgs::smg::PoseStamped& start, 
-            nav_msgs::msg::PoseStamped& stop)
+        nav_msgs::msg::Path DijkstraPlanner::plan(const nav_msgs::smg::PoseStamped & start, 
+            nav_msgs::msg::PoseStamped & goal)
         {
             std::vector<std::pair<int, int>> explore_directions = {{-1, 0}, {1, 0}, { 1, 1}, {-1, -1}};
             std::priority_queue <GraphNode, std::vector<GraphNode>, std::greater(GraphNode)> pending_nodes;
@@ -121,7 +121,7 @@ namespace planning
                 {
                     GraphNode new_node = active_node + dir;
                     if(std::find(visited_nodes.begin(), visited_nodes.end(), new_node) == visited_node.end()
-                        && poseOnMap(newNode) && map_->data.at(posetoCell(new_node)) == 0)
+                        && poseOnMap(newNode) && map_->data.at(poseToCell(new_node)) == 0)
                     {
                         new_node.cost = active_node.cost + 1;
                         new_node.prev = std::make_shared<GraphNode>(active_node);
@@ -136,22 +136,44 @@ namespace planning
 
             }
             path.header.frame_id = map_->header.frame_id
-            path.header.time_stamp = this->clock()->now();
+            // path.header.time_stamp = this->clock()->now();
 
-            while(active_node.prev && rclcpp::ok)
+            while(active_node.prev && rclcpp::ok())
             {
                 geometry_msgs::msg::Pose last_poses;
+                last_poses = gridToWorld(active_node);
+                
 
             }
             
         }
 
-        GraphNode DijkstraPlanner::worldToGrid(const geometry_msgs::msg::Pose & pose )
+        GraphNode DijkstraPlanner::worldToGrid(const geometry_msgs::msg::Pose & pose)
         {
             int grid_x = (pose.position.x - map_.info.origin.position.x) / map_.info.resolution;
             int grid_y = (pose.position.y - map_.info.origin.position.y) / map_.info.resolution;
 
             return GraphNode(grid_x, grid_y);
+        }
+
+        geometry_msgs::msg::Pose DijkstraPlanner::gridToWorld(const GraphNode & node)
+        {
+            geometry_msgs::msg::Pose pose;
+            pose.position.x = node.x * map_.info.resolution + map_.info.origin.position.x;
+            pose.position.y = mode.y * map_.info.resolution + map_.info.origin.position.y;
+        
+            return pose;
+        }
+
+        bool poseOnMap(const GraphNode & node)
+        {
+            return node.x >= 0 && node.x <= static_cast<int>(map_.info.width) &&
+                node.y >= 0 && node.y <= static_cast<int>(map_.info.height);
+        }
+
+        unsigned int DijkstraPlanner::poseToCell(const GraphNode & node)
+        {
+            
         }
 
 }

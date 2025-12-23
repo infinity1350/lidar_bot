@@ -24,13 +24,17 @@ class DijkstraPlanner : public rclcpp:Node
 
         std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
         std::unique_ptr<tf2_ros::Buffer> tf_buffer_;
+    
 
         void mapCallback(const nav_msgs::msg::OccupancyGrid:SharedPtr msg);
         void poseCallback(const geometry_msgs::msg::PoseStamped:SharedPtr msg);
 
         GraphNode worldToGrid(const geometry_msgs::msg::Pose & pose);
+        geometry_msgs::msg::Pose gridToWorld(const GraphNode & node);
+        bool poseOnMap(const GraphNode & node);
+        unsigned int poseToCell(const GraphNode & node);
         
-        nav_msgs::msg::Path Plan(const geometry_msgs:msg::PoseStamped& start, const geometry_msgs::msg::PoseStamped& goal);
+        nav_msgs::msg::Path plan(const geometry_msgs:msg::PoseStamped & start, const geometry_msgs::msg::PoseStamped & goal);
 
 };
 }
