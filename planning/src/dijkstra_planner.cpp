@@ -112,7 +112,7 @@ namespace planning
                 active_node.pending_nodes.top();
                 pending_nodes.pop()
 
-                if(active_node == goal)
+                if(worldToGrid(goal) == active_node)
                 {
                     break;
                 }
@@ -120,9 +120,27 @@ namespace planning
                 for(const auto dir : explore_directions)
                 {
                     GraphNode new_node = active_node + dir;
-                    if        
+                    if(std::find(visited_nodes.begin(), visited_nodes.end(), new_node) == visited_node.end()
+                        && poseOnMap(newNode) && map_->data.at(posetoCell(new_node)) == 0)
+                    {
+                        new_node.cost = active_node.cost + 1;
+                        new_node.prev = std::make_shared<GraphNode>(active_node);
+                        pending_nodes.push(new_node);
+                        visited_node.pop(active_node);
+                    }    
 
                 }
+
+                visited_map_.data.at(poseToCell(active_node)) = 10;
+                map_pub_->publish(visited_map_);
+
+            }
+            path.header.frame_id = map_->header.frame_id
+            path.header.time_stamp = this->clock()->now();
+
+            while(active_node.prev && rclcpp::ok)
+            {
+                geometry_msgs::msg::Pose last_poses;
 
             }
             
