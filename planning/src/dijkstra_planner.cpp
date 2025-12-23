@@ -99,10 +99,37 @@ namespace planning
             nav_msgs::msg::PoseStamped& stop)
         {
             std::vector<std::pair<int, int>> explore_directions = {{-1, 0}, {1, 0}, { 1, 1}, {-1, -1}};
-            std::priority_queue <GraphNode, std::vector<GraphNodes>, std::greater(GraphNode)> pending_nodes;
+            std::priority_queue <GraphNode, std::vector<GraphNode>, std::greater(GraphNode)> pending_nodes;
             std::priority_queue <GraphNode> visited_nodes; 
             
             nav_msgs::msg::Path path;
+
+            
+            pending_nodes.push(worldToGrid(start))
+            while(!pending_nodes.empty() && rclcpp::ok)
+            {
+                GraphNode active_node;
+                active_node.pending_nodes.top();
+                pending_nodes.pop()
+
+                if(active_node == goal)
+                {
+                    break;
+                }
+
+                for(const auto dir : explore_directions)
+                {
+                    GraphNode new_node = active_node + dir;
+                    
+                    
+
+                }
+
+            }
+
+            
+
+            
 
 
             
@@ -110,10 +137,10 @@ namespace planning
 
         GraphNode DijkstraPlanner::worldToGrid(const geometry_msgs::msg::Pose & pose )
         {
-            int grid_x = (pose.position.x - map_.info.origin.position.x) / ;
+            int grid_x = (pose.position.x - map_.info.origin.position.x) / map_.info.resolution;
+            int grid_y = (pose.position.y - map_.info.origin.position.y) / map_.info.resolution;
 
-            return GraphNode(int in_x, int in_y);
-
+            return GraphNode(grid_x, grid_y);
         }
 
 }
