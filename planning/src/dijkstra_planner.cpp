@@ -140,11 +140,18 @@ namespace planning
 
             while(active_node.prev && rclcpp::ok())
             {
-                geometry_msgs::msg::Pose last_poses;
-                last_poses = gridToWorld(active_node);
-                
+                geometry_msgs::msg::Pose last_poses = gridToWorld(active_node);
+                geometry_msgs::msg::PoseStamped last_pose_stamped;
+                last_pose_stamped.header.frame_id = map_->header.frame_id;
+                last_pose_stamped.pose = last_pose;
+            
+                path.poses.push_back(last_poses_stamped);
+                active_node = *(active_node.prev);
 
             }
+
+            std::reverse(path.poses.begin(), path.poses,end());
+            return path;
             
         }
 
