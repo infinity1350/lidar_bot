@@ -49,7 +49,7 @@ class DijkstraPlanner : public rclcpp::Node
         rclcpp::Publisher<nav_msgs::msg::OccupancyGrid>::SharedPtr map_pub_;
 
         std::shared_ptr<nav_msgs::msg::OccupancyGrid> map_;
-        std::shared_ptr<nav_msgs::msg::OccupancyGrid> visited_map_;
+        nav_msgs::msg::OccupancyGrid visited_map_;
         std::shared_ptr<geometry_msgs::msg::PoseStamped> current_pose_;
 
         std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
@@ -64,7 +64,7 @@ class DijkstraPlanner : public rclcpp::Node
         bool poseOnMap(const GraphNode & node);
         unsigned int poseToCell(const GraphNode & node);
         
-        nav_msgs::msg::Path plan(const geometry_msgs::msg::PoseStamped & start, const geometry_msgs::msg::PoseStamped & goal);
+        nav_msgs::msg::Path plan(const geometry_msgs::msg::Pose & start, const geometry_msgs::msg::Pose & goal);
 
 };
 }
