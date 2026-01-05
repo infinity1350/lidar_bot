@@ -86,7 +86,7 @@ def generate_launch_description():
             ])
         ]),
         launch_arguments={
-            'ign_args': ['-r -v 4 ', LaunchConfiguration('world')],
+            'ign_args': ['-r -v 4 --render-engine ogre2 ', LaunchConfiguration('world')],
             'on_exit_shutdown': 'true'
         }.items()
     )
@@ -95,7 +95,7 @@ def generate_launch_description():
     spawn_entity = Node(
         package='ros_ign_gazebo',
         executable='create',
-        arguments=['-topic', 'robot_description', '-name', 'my_robot', '-z', '0.1'],
+        arguments=['-topic', 'robot_description', '-z', '0.1'],
         output='screen'
     )
 
