@@ -17,12 +17,12 @@ find_package(tf2 REQUIRED)
 include_directories(include)
 
 # Create executable
-add_executable(dijkstra_planner_node
+add_executable(dijkstra_planner
   src/dijkstra_planner.cpp
 )
 
 # Specify dependencies
-ament_target_dependencies(dijkstra_planner_node
+ament_target_dependencies(dijkstra_planner
   rclcpp
   nav_msgs
   geometry_msgs
@@ -32,7 +32,7 @@ ament_target_dependencies(dijkstra_planner_node
 
 # Install targets
 install(TARGETS
-  dijkstra_planner_node
+  dijkstra_planner
   DESTINATION lib/${PROJECT_NAME}
 )
 

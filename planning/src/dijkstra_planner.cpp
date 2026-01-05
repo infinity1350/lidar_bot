@@ -43,6 +43,8 @@ namespace planning
             RCLCPP_ERROR(get_logger(), "No map received");
             return;
         }
+        RCLCPP_INFO(get_logger(), "Goal pose received");
+        RCLCPP_INFO(get_logger(), "map received");
         visited_map_.data = std::vector<int8_t>(visited_map_.info.width * visited_map_.info.height, -1); 
         geometry_msgs::msg::TransformStamped map_to_base_tf;
         
@@ -148,8 +150,8 @@ namespace planning
 
     bool DijkstraPlanner::poseOnMap(const GraphNode & node)
     {
-        return node.x >= 0 && node.x <= static_cast<int>(map_->info.width) &&
-            node.y >= 0 && node.y <= static_cast<int>(map_->info.height);
+        return node.x >= 0 && node.x < static_cast<int>(map_->info.width) &&
+            node.y >= 0 && node.y < static_cast<int>(map_->info.height);
     }
 
     unsigned int DijkstraPlanner::poseToCell(const GraphNode & node)
