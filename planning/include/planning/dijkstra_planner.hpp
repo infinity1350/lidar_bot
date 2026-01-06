@@ -38,6 +38,11 @@ class DijkstraPlanner : public rclcpp::Node
         {
             return cost == other.cost;
         }
+        GraphNode operator+(std::pair<int, int> const & other)
+        {
+            return GraphNode(x + other.first, y + other.second);
+        }
+
     };
     public:
         DijkstraPlanner();

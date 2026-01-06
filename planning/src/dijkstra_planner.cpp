@@ -55,7 +55,7 @@ namespace planning
         }
         catch(const tf2::TransformException &ex)
         {
-            RCLCPP_ERROR(get_logger(), "Transform error: %s", ex.what());
+            RCLCPP_INFO(get_logger(), "Transform error: %s", ex.what());
             return;
         }
 
@@ -67,7 +67,7 @@ namespace planning
         auto path = plan(map_to_base_pose, msg->pose);
         if(!path.poses.empty())
         {
-            RCLCPP_ERROR(get_logger(), "shortest path to the goal is found");
+            RCLCPP_INFO(get_logger(), "shortest path to the goal is found");
             path_pub_->publish(path);
         }
     }
@@ -94,16 +94,14 @@ namespace planning
 
             for(const auto & dir : explore_directions)
             {
-                GraphNode new_node;
-                new_node.x = active_node.x + dir.first;
-                new_node.y = active_node.y + dir.second; 
+                GraphNode new_node = active_node + dir; 
                 if(std::find(visited_nodes.begin(), visited_nodes.end(), new_node) == visited_nodes.end()
                     && poseOnMap(new_node) && map_->data.at(poseToCell(new_node)) == 0)
                 {
                     new_node.cost = active_node.cost + 1;
                     new_node.prev = std::make_shared<GraphNode>(active_node);
                     pending_nodes.push(new_node);
-                    visited_nodes.push_back(active_node);
+                    visited_nodes.push_back(new_node);
                 }    
 
             }
