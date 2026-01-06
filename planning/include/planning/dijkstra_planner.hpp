@@ -36,9 +36,9 @@ class DijkstraPlanner : public rclcpp::Node
 
         bool operator == ( const GraphNode & other) const 
         {
-            return cost == other.cost;
+            return x == other.x && y == other.y;
         }
-        GraphNode operator+(std::pair<int, int> const & other)
+        GraphNode operator +(std::pair<int, int> const & other)
         {
             return GraphNode(x + other.first, y + other.second);
         }

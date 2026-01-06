@@ -1,11 +1,20 @@
 #!/usr/bin/env python3
 from launch import LaunchDescription
-from launch.actions import RegisterEventHandler, DeclareLaunchArgument, IncludeLaunchDescription
-from launch.event_handlers import OnProcessExit
+from launch.actions import (
+    RegisterEventHandler,
+    DeclareLaunchArgument,
+    IncludeLaunchDescription,
+    EmitEvent,
+    LogInfo,
+    TimerAction
+)
+from launch.event_handlers import OnProcessExit, OnProcessStart
 from launch.substitutions import Command, FindExecutable, PathJoinSubstitution, LaunchConfiguration
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch_ros.actions import Node
+from launch_ros.actions import Node, LifecycleNode
 from launch_ros.substitutions import FindPackageShare
+from launch_ros.events.lifecycle import ChangeState
+from lifecycle_msgs.msg import Transition
 from ament_index_python.packages import get_package_share_directory
 import os
 
@@ -53,6 +62,17 @@ def generate_launch_description():
         default_value=default_world,
         description='Full path to world file (.world)'
     )
+    
+    # NEW: Map yaml argument for navigation
+    map_yaml_arg = DeclareLaunchArgument(
+        'map_yaml',
+        default_value='/home/optimus/bumperbot_ws/src/bumperbot_mapping/maps/small_house/map.yaml',
+        description='Full path to map yaml file'
+    )
+
+    # Get configurations
+    use_sim_time = LaunchConfiguration('use_sim_time')
+    map_yaml = LaunchConfiguration('map_yaml')
 
     # Robot description
     robot_description_content = Command([
@@ -108,7 +128,7 @@ def generate_launch_description():
         output='screen'
     )
 
-    # RViz
+    # RViz (from original code)
     rviz_node = Node(
         package="rviz2",
         executable="rviz2",
@@ -149,7 +169,34 @@ def generate_launch_description():
         arguments=['diff_drive_controller', '--controller-manager', '/controller_manager'],
     )
 
-    # Delayed spawners
+    # === NEW NAVIGATION COMPONENTS ===
+    
+    # Static TF: map -> odom
+    static_tf_map_odom = Node(
+        package='tf2_ros',
+        executable='static_transform_publisher',
+        name='static_tf_map_odom',
+        arguments=['0', '0', '0', '0', '0', '0', 'map', 'odom'],
+        parameters=[{'use_sim_time': use_sim_time}],
+        output='screen'
+    )
+
+    # Map Server (Lifecycle Node)
+    map_server = LifecycleNode(
+        package='nav2_map_server',
+        executable='map_server',
+        name='map_server',
+        namespace='',  # Required parameter in ROS2 Humble
+        output='screen',
+        parameters=[{
+            'yaml_filename': map_yaml,
+            'use_sim_time': use_sim_time
+        }]
+    )
+
+    # === ORIGINAL DELAYED SPAWNERS ===
+    
+    # Delayed RViz (from original code) - starts after joint_state_broadcaster
     delay_rviz = RegisterEventHandler(
         event_handler=OnProcessExit(
             target_action=joint_state_broadcaster_spawner,
@@ -157,6 +204,7 @@ def generate_launch_description():
         )
     )
 
+    # Delayed robot controller (from original code)
     delay_robot_controller = RegisterEventHandler(
         event_handler=OnProcessExit(
             target_action=joint_state_broadcaster_spawner,
@@ -164,6 +212,7 @@ def generate_launch_description():
         )
     )
 
+    # Delayed spawn (from original code)
     delay_spawn = RegisterEventHandler(
         event_handler=OnProcessExit(
             target_action=robot_state_pub_node,
@@ -171,18 +220,93 @@ def generate_launch_description():
         )
     )
 
+    # === NEW: Start navigation components after controllers are ready ===
+    
+    delay_navigation = RegisterEventHandler(
+        event_handler=OnProcessExit(
+            target_action=robot_controller_spawner,
+            on_exit=[
+                LogInfo(msg='Controllers ready, starting navigation components...'),
+                TimerAction(
+                    period=2.0,
+                    actions=[
+                        static_tf_map_odom,
+                        map_server,
+                    ]
+                )
+            ],
+        )
+    )
+
+    # === NEW: Map server lifecycle management ===
+    
+    # Configure map_server after it starts
+    configure_map_server = EmitEvent(
+        event=ChangeState(
+            lifecycle_node_matcher=lambda node: node.name == 'map_server',
+            transition_id=Transition.TRANSITION_CONFIGURE,
+        )
+    )
+
+    activate_map_server = EmitEvent(
+        event=ChangeState(
+            lifecycle_node_matcher=lambda node: node.name == 'map_server',
+            transition_id=Transition.TRANSITION_ACTIVATE,
+        )
+    )
+
+    configure_event_handler = RegisterEventHandler(
+        OnProcessStart(
+            target_action=map_server,
+            on_start=[
+                LogInfo(msg='Map server started, configuring...'),
+                TimerAction(
+                    period=2.0,
+                    actions=[configure_map_server]
+                )
+            ]
+        )
+    )
+
+    activate_event_handler = RegisterEventHandler(
+        OnProcessStart(
+            target_action=map_server,
+            on_start=[
+                TimerAction(
+                    period=4.0,
+                    actions=[
+                        LogInfo(msg='Activating map server...'),
+                        activate_map_server
+                    ]
+                )
+            ]
+        )
+    )
+
+    # === FINAL NODE LIST ===
     nodes = [
+        # Arguments
         use_sim_time_arg,
         world_arg,
+        map_yaml_arg,  # NEW
+        
+        # Original nodes
         gazebo,
         robot_state_pub_node,
         bridge,
         control_node,
         spawn_entity,
         joint_state_broadcaster_spawner,
+        
+        # Original event handlers
         delay_rviz,
         delay_robot_controller,
         delay_spawn,
+        
+        # NEW: Navigation components and lifecycle management
+        delay_navigation,
+        configure_event_handler,
+        activate_event_handler,
     ]
 
     return LaunchDescription(nodes)
