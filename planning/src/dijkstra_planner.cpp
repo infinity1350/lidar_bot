@@ -70,6 +70,10 @@ namespace planning
             RCLCPP_INFO(get_logger(), "shortest path to the goal is found");
             path_pub_->publish(path);
         }
+        else
+        {
+            RCLCPP_WARN(get_logger(), "No path found to the goal");
+        }
     }
     nav_msgs::msg::Path DijkstraPlanner::plan(const geometry_msgs::msg::Pose & start, 
         const geometry_msgs::msg::Pose & goal)
@@ -79,6 +83,10 @@ namespace planning
         std::vector <GraphNode> visited_nodes; 
         GraphNode active_node;
         nav_msgs::msg::Path path;
+
+        RCLCPP_INFO(get_logger(), "Planning started from (%d, %d) to (%d, %d)",
+            worldToGrid(start).x, worldToGrid(start).y,
+            worldToGrid(goal).x, worldToGrid(goal).y);
 
         
         pending_nodes.push(worldToGrid(start));
