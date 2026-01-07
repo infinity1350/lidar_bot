@@ -7,7 +7,7 @@
 
 namespace motion_planning
 {
-    class PDModtionPlanner : public rclcpp::Node
+    class PDMotionPlanner : public rclcpp::Node
     {
         public:
             PDMotionPlanner();
@@ -21,5 +21,15 @@ namespace motion_planning
             std::shared_ptr<tf2_ros:Buffer> tf_buffer_;
             rclcpp::Timerbase::SharedPtr control_loop_;
             
+            double kp_;
+            double kd_;
+            double step_size_;
+            double max_linear_velocity_;
+            double max_angular_velocity;
+            nav_msgs::msg::Path global_plan;
+
+            void controlLoop();
+            void pathCallback(const nav_msgs::msg::Path::SharedPtr path);
+
     };
 }
