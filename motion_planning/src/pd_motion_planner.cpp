@@ -1,5 +1,6 @@
 #include <motion_planning/pd_motion_planner.hpp>
 #include <geometry_msgs/msg/transfrom_stamped.hpp>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 motion_planning
 {
@@ -61,6 +62,28 @@ motion_planning
         RCLCPP_INFO(get_logger(), "Frame ID of the robot pose are : %s", robot_pose.header.frame_id.c_str());
         RCLCPP_INFO(get_logger(), "Frame ID of the global plan  are : %s", global_plan_.header.frame_id.c_str());
 
+    }
+
+    bool PDMotionPlanner::transformPlan(const std::string & frame)
+    {
+        if(global_frame_.header.frame_id == frame)
+        {
+            return true;
+        }
+        geometry_msgs::msg::TransformStamped transform;
+        try{
+            transform = tf_buffer_->lookupTransform(frame, global_plan_.header.frame_id, tf2::TimePointZero);
+        }
+        catch(tf2::LookupException &ex)
+        {
+            RCLCPP_ERROR_STREAM(get_logger(), "Couldn't transform plan from frame " << global_plan_.header.frame_id << "to " << frame);
+            return false
+        }
+
+        for(auto & pose : global_plan_.poses)
+        {
+            
+        }
     }
 
 }

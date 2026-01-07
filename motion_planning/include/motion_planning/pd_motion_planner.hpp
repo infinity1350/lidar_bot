@@ -31,5 +31,7 @@ namespace motion_planning
             void controlLoop();
             void pathCallback(const nav_msgs::msg::Path::SharedPtr path);
 
+            bool transfromPlan(const std::string & frame);
+
     };
 }
