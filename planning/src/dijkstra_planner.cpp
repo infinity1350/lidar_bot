@@ -91,11 +91,7 @@ namespace planning
             {1, 0},     // right
             {-1, 0},    // left
             {0, 1},     // up
-            {0, -1},    // down
-            {1, 1},     // diagonal: right-up
-            {-1, 1},    // diagonal: left-up
-            {1, -1},    // diagonal: right-down
-            {-1, -1}    // diagonal: left-down
+            {0, -1},    // down 
         };
         
         std::priority_queue<GraphNode, std::vector<GraphNode>, std::greater<GraphNode>> pending_nodes;

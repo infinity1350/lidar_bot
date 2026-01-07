@@ -62,6 +62,14 @@ motion_planning
         RCLCPP_INFO(get_logger(), "Frame ID of the robot pose are : %s", robot_pose.header.frame_id.c_str());
         RCLCPP_INFO(get_logger(), "Frame ID of the global plan  are : %s", global_plan_.header.frame_id.c_str());
 
+        ;
+
+        if(!transformPlan(robot_pose.header.frame_id))
+        {
+            RCLCPP_ERROR(get_logger(), "Unable to transfrom plan in robot's frame");
+            return;
+        }
+
     }
 
     bool PDMotionPlanner::transformPlan(const std::string & frame)
@@ -77,13 +85,16 @@ motion_planning
         catch(tf2::LookupException &ex)
         {
             RCLCPP_ERROR_STREAM(get_logger(), "Couldn't transform plan from frame " << global_plan_.header.frame_id << "to " << frame);
-            return false
+            return false;
         }
 
         for(auto & pose : global_plan_.poses)
         {
-            
+            tf2::doTransform(pose, pose, transform);
         }
+
+        global_plan_.poses.header.frame_id = frame;
+        return true;
     }
 
 }
