@@ -1,4 +1,5 @@
 #include <motion_planning/pd_motion_planner.hpp>
+#include <geometry_msgs/msg/transfrom_stamped.hpp>
 
 motion_planning
 {
@@ -27,13 +28,48 @@ motion_planning
         next_pose_pub_ = this->create_publisher<geometry_msg::msg::PoseStamped>("/pd/next_pose", 10);
 
         tf_buffer_ = std::make_shared<tf_ros::Buffer>(get_clock());
-        tf_listener_ std::make_shared<tf2_ros::TransformListener>(tf_buffer_);
-        control_loop_ = create_wall_timer(std::chrono::milliseconds(100), );
+        tf_listener_ std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
+        control_loop_ = create_wall_timer(
+            std::chrono::milliseconds(100), std::bind(&PdMotionPlanner::controlLoop, this));
  
     }
 
     void PDMotionPlanner::pathCallback(const nav_msgs::msg::Path::SharedPtr path)
     {
-        global_plan_ = path
+        global_plan_ = *path;
     }
+    void PDMotionPlanner::controlLoop()
+    {
+        if(gobal_plan_.poses.empty())
+        {
+            RCLCPP_ERROR(get_logger(), "There is no path found");
+            return;
+        }
+
+        geometry_msgs::msg::TransformStamped robot_pose;
+        try 
+        {
+            tf_buffer_->lookupTranform(
+                "odom", "base_footprint", tf2::TimePointZero);
+        }
+        catch(const tf2::TransformException &ex)
+        {
+            RCLCPP_ERROR(get_logger(), "Transform error: %s", ex.what());
+            return;
+        }
+
+        RCLCPP_INFO(get_logger(), "Frame ID of the robot pose are : %s", robot_pose.header.frame_id.c_str());
+        RCLCPP_INFO(get_logger(), "Frame ID of the global plan  are : %s", global_plan_.header.frame_id.c_str());
+
+    }
+
+}
+
+int main(int argc, char **argv)
+{
+    rclcpp::init(argc, argv);
+    auto node = std::make_shared<motion_planning::PDMotionPlanner>();
+    rclcpp::spin(node);
+    rclcpp::shutdown();
+    return 0;
 }
