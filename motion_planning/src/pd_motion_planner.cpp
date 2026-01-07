@@ -19,10 +19,16 @@ motion_planning
         
 
         path_sub_ = this->create_subscription<nav_msgs::msg::Path>(
-            "/path", 10, std::bind(&PDMotionPlanner::pathCallback, this, std::placeholders::_1));
+            "dijkstra_path", 10, std::bind(&PDMotionPlanner::pathCallback, this, std::placeholders::_1));
 
         cmd_sub_ = this->create_publisher<geometry_msgs::msg::twist>(
             "/cmd_vel", 10);
+
+        next_pose_pub_ = this->create_publisher<geometry_msg::msg::PoseStamped>("/pd/next_pose", 10);
+
+        tf_buffer_ = std::make_shared<tf_ros::Buffer>(get_clock());
+        tf_listener_ std::make_shared<tf2_ros::TransformListener>(tf_buffer_);
+        control_loop_ = create_wall_timer(std::chrono::milliseconds(100), );
  
     }
 

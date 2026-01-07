@@ -17,7 +17,7 @@ namespace motion_planning
             rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr cmd_pub_;
             rclcpp:Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr next_pose_pub_;
 
-            std::shared_ptr<tf2_ros::TransformListener> tranform_listener_;
+            std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
             std::shared_ptr<tf2_ros:Buffer> tf_buffer_;
             rclcpp::Timerbase::SharedPtr control_loop_;
             
