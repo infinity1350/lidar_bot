@@ -5,7 +5,8 @@
 motion_planning
 {
     PDMotionPlanner::PDMotionPlanner() : Node("motion_planner"), 
-        kp_(2.0), kd_(0.1), step_size_(0.2), max_linear_velocity_(0.3), max_angular_velocity_(1.0)
+        kp_(2.0), kd_(0.1), step_size_(0.2), max_linear_velocity_(0.3), max_angular_velocity_(1.0), 
+        prev_angular_error_(0.0), prev_linear_error_(0.0)
     {
         declare_parameter<double>("kp", kp_);
         declare_parameter<double>("kd", kd_);
@@ -32,6 +33,8 @@ motion_planning
         tf_listener_ std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
         control_loop_ = create_wall_timer(
             std::chrono::milliseconds(100), std::bind(&PdMotionPlanner::controlLoop, this));
+
+        last_cycle_time_ = get_clock()->now;
  
     }
 
@@ -39,6 +42,7 @@ motion_planning
     {
         global_plan_ = *path;
     }
+
     void PDMotionPlanner::controlLoop()
     {
         if(gobal_plan_.poses.empty())
@@ -56,13 +60,11 @@ motion_planning
         catch(const tf2::TransformException &ex)
         {
             RCLCPP_ERROR(get_logger(), "Transform error: %s", ex.what());
-            return;
+            return false;
         }
 
         RCLCPP_INFO(get_logger(), "Frame ID of the robot pose are : %s", robot_pose.header.frame_id.c_str());
         RCLCPP_INFO(get_logger(), "Frame ID of the global plan  are : %s", global_plan_.header.frame_id.c_str());
-
-        ;
 
         if(!transformPlan(robot_pose.header.frame_id))
         {
@@ -70,6 +72,29 @@ motion_planning
             return;
         }
 
+        geometry_msgs::msg::PoseStamped robot_pose_stamped;
+        robot_pose_stamped.header.frame_id = robot_pose.header.frame_id;
+        robot_pose_stamped.pose.position.x = robot_pose.transfrom.translation.x;
+        robot_pose_stamped.pose.position.y = robot_pose.transfrom.translation.y;
+        robot_pose_stamped.pose.orientation = robot_pose.transform.rotation;
+
+        auto next_pose = getNextPose(robot_pose_stamped);
+        double dx = next_pose.pose.postion.x - robot_pose_stamped.pose.position.x;
+        double dy = next_pose.pose.postion.y - robot_pose_stamped.pose.position.y;
+
+        double distance = std::sqrt(dx * dx + dy * dy);
+
+        if(distance <= 0.1)
+        {
+            RCLCPP_INFO(get_logger(), "Goal Reached");
+            global_plan_.poses.clear();
+            return;
+        }
+        
+        next_pose_pub->publisher(next_pose);
+        tf2::Transform robot_tf, next_pose_tf;
+        tf2::fromMsg(robot_pose_stamped, robot_tf);
+        tf2::fromMsg(next_pose)
     }
 
     bool PDMotionPlanner::transformPlan(const std::string & frame)
@@ -95,6 +120,27 @@ motion_planning
 
         global_plan_.poses.header.frame_id = frame;
         return true;
+    }
+
+    geometry_msgs::msg::PoseStamped PDMotionPlanner::getNextPose(const geometry_msgs::msg::PoseStamped & robot_pose)
+    {
+        auto next_pose = global_pose_.poses.back();
+        for(auto pose_it = global_plan_.poses.rbegin(); pose_it != global_plan_.poses.rend(), ++pose_it)
+        {
+            double dx = pose_it->pose.postion.x - robot_pose.pose.position.x;
+            double dy = pose_it->pose.postion.y - robot_pose.pose.position.y;
+
+            double distance = std::sqrt(dx * dx + dy * dy);
+            if (distance > step_size_)
+            {
+                next_pose = *pose_it;
+            }
+            else
+            {
+                break;
+            }
+        }
+        return next_pose;     
     }
 
 }
