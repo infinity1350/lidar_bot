@@ -1,6 +1,7 @@
 #include <motion_planning/pd_motion_planner.hpp>
 #include <geometry_msgs/msg/transfrom_stamped.hpp>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+#include <algorithm>
 
 motion_planning
 {
@@ -83,6 +84,7 @@ motion_planning
         double dy = next_pose.pose.postion.y - robot_pose_stamped.pose.position.y;
 
         double distance = std::sqrt(dx * dx + dy * dy);
+        
 
         if(distance <= 0.1)
         {
@@ -99,6 +101,15 @@ motion_planning
         next_pose_robot_tf = robot_tf.inverse() * next_pose_tf;
         double linear_error = next_pose_robot_tf.getOrigin().getX();
         double angular_error = next_pose_robot_tf.getOrigin().getY();
+
+        double dt = (get_clock()->now - last_cycle_time_).seconds();
+        double linear_error_derivative = (linear_error - prev_linear_error_)/dt;
+        double angular_error_derivative = (angular_error - prev_angular_error_)/dt;
+    
+        geometry_msgs::msg::Twist cmd_vel;
+        cmd_vel.linear.x = std::clamp(kp_ * linear_error + kd_ * linear_error_derivative, -max_linear_velocity_, max_linear_velocity_);
+        cmd_vel.angular.z = std::clamp(kp_ * angular_error + kd_ * angular_error_derivative, -max_angular_velocity, max_angular_velocity);
+
     }
 
     bool PDMotionPlanner::transformPlan(const std::string & frame)

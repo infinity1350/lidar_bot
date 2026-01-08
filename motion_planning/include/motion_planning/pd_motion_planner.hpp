@@ -25,7 +25,7 @@ namespace motion_planning
             double kd_;
             double step_size_;
             double max_linear_velocity_;
-            double max_angular_velocity;
+            double max_angular_velocity_;
             nav_msgs::msg::Path global_plan;
             double prev_angular_error_;
             double prev_linear_error_;
