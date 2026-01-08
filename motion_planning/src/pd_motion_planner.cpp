@@ -92,9 +92,13 @@ motion_planning
         }
         
         next_pose_pub->publisher(next_pose);
-        tf2::Transform robot_tf, next_pose_tf;
+        tf2::Transform robot_tf, next_pose_tf, next_pose_robot_tf;
         tf2::fromMsg(robot_pose_stamped, robot_tf);
-        tf2::fromMsg(next_pose)
+        tf2::fromMsg(next_pose, next_pose_tf);
+
+        next_pose_robot_tf = robot_tf.inverse() * next_pose_tf;
+        double linear_error = next_pose_robot_tf.getOrigin().getX();
+        double angular_error = next_pose_robot_tf.getOrigin().getY();
     }
 
     bool PDMotionPlanner::transformPlan(const std::string & frame)
