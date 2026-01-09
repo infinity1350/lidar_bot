@@ -1,9 +1,9 @@
 #include <motion_planning/pd_motion_planner.hpp>
-#include <geometry_msgs/msg/transfrom_stamped.hpp>
+#include <geometry_msgs/msg/transform_stamped.hpp>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #include <algorithm>
 
-motion_planning
+namespace motion_planning
 {
     PDMotionPlanner::PDMotionPlanner() : Node("motion_planner"), 
         kp_(2.0), kd_(0.1), step_size_(0.2), max_linear_velocity_(0.3), max_angular_velocity_(1.0), 
@@ -25,17 +25,17 @@ motion_planning
         path_sub_ = this->create_subscription<nav_msgs::msg::Path>(
             "dijkstra_path", 10, std::bind(&PDMotionPlanner::pathCallback, this, std::placeholders::_1));
 
-        cmd_sub_ = this->create_publisher<geometry_msgs::msg::twist>(
+        cmd_pub_ = this->create_publisher<geometry_msgs::msg::Twist>(
             "/cmd_vel", 10);
 
-        next_pose_pub_ = this->create_publisher<geometry_msg::msg::PoseStamped>("/pd/next_pose", 10);
+        next_pose_pub_ = this->create_publisher<geometry_msgs::msg::PoseStamped>("/pd/next_pose", 10);
 
-        tf_buffer_ = std::make_shared<tf_ros::Buffer>(get_clock());
-        tf_listener_ std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
+        tf_buffer_ = std::make_shared<tf2_ros::Buffer>(get_clock());
+        tf_listener_  = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
         control_loop_ = create_wall_timer(
-            std::chrono::milliseconds(100), std::bind(&PdMotionPlanner::controlLoop, this));
+            std::chrono::milliseconds(100), std::bind(&PDMotionPlanner::controlLoop, this));
 
-        last_cycle_time_ = get_clock()->now;
+        last_cycle_time_ = get_clock()->now();
  
     }
 
@@ -46,7 +46,7 @@ motion_planning
 
     void PDMotionPlanner::controlLoop()
     {
-        if(gobal_plan_.poses.empty())
+        if(global_plan_.poses.empty())
         {
             RCLCPP_ERROR(get_logger(), "There is no path found");
             return;
@@ -55,13 +55,13 @@ motion_planning
         geometry_msgs::msg::TransformStamped robot_pose;
         try 
         {
-            tf_buffer_->lookupTranform(
+            tf_buffer_->lookupTransform(
                 "odom", "base_footprint", tf2::TimePointZero);
         }
         catch(const tf2::TransformException &ex)
         {
             RCLCPP_ERROR(get_logger(), "Transform error: %s", ex.what());
-            return false;
+            return;
         }
 
         RCLCPP_INFO(get_logger(), "Frame ID of the robot pose are : %s", robot_pose.header.frame_id.c_str());
@@ -75,13 +75,13 @@ motion_planning
 
         geometry_msgs::msg::PoseStamped robot_pose_stamped;
         robot_pose_stamped.header.frame_id = robot_pose.header.frame_id;
-        robot_pose_stamped.pose.position.x = robot_pose.transfrom.translation.x;
-        robot_pose_stamped.pose.position.y = robot_pose.transfrom.translation.y;
+        robot_pose_stamped.pose.position.x = robot_pose.transform.translation.x;
+        robot_pose_stamped.pose.position.y = robot_pose.transform.translation.y;
         robot_pose_stamped.pose.orientation = robot_pose.transform.rotation;
 
         auto next_pose = getNextPose(robot_pose_stamped);
-        double dx = next_pose.pose.postion.x - robot_pose_stamped.pose.position.x;
-        double dy = next_pose.pose.postion.y - robot_pose_stamped.pose.position.y;
+        double dx = next_pose.pose.position.x - robot_pose_stamped.pose.position.x;
+        double dy = next_pose.pose.position.y - robot_pose_stamped.pose.position.y;
 
         double distance = std::sqrt(dx * dx + dy * dy);
         
@@ -92,29 +92,33 @@ motion_planning
             global_plan_.poses.clear();
             return;
         }
-        
-        next_pose_pub->publisher(next_pose);
+
+        next_pose_pub_->publish(next_pose);
         tf2::Transform robot_tf, next_pose_tf, next_pose_robot_tf;
-        tf2::fromMsg(robot_pose_stamped, robot_tf);
-        tf2::fromMsg(next_pose, next_pose_tf);
+        tf2::fromMsg(robot_pose_stamped.pose, robot_tf);
+        tf2::fromMsg(next_pose.pose, next_pose_tf);
 
         next_pose_robot_tf = robot_tf.inverse() * next_pose_tf;
         double linear_error = next_pose_robot_tf.getOrigin().getX();
         double angular_error = next_pose_robot_tf.getOrigin().getY();
 
-        double dt = (get_clock()->now - last_cycle_time_).seconds();
+        double dt = (get_clock()->now() - last_cycle_time_).seconds();
         double linear_error_derivative = (linear_error - prev_linear_error_)/dt;
         double angular_error_derivative = (angular_error - prev_angular_error_)/dt;
     
         geometry_msgs::msg::Twist cmd_vel;
         cmd_vel.linear.x = std::clamp(kp_ * linear_error + kd_ * linear_error_derivative, -max_linear_velocity_, max_linear_velocity_);
-        cmd_vel.angular.z = std::clamp(kp_ * angular_error + kd_ * angular_error_derivative, -max_angular_velocity, max_angular_velocity);
+        cmd_vel.angular.z = std::clamp(kp_ * angular_error + kd_ * angular_error_derivative, -max_angular_velocity_, max_angular_velocity_);
+        cmd_pub_->publish(cmd_vel);
 
+        last_cycle_time_ = get_clock()->now();
+        prev_linear_error_ = linear_error;
+        prev_angular_error_ = angular_error;
     }
 
     bool PDMotionPlanner::transformPlan(const std::string & frame)
     {
-        if(global_frame_.header.frame_id == frame)
+        if(global_plan_.header.frame_id == frame)
         {
             return true;
         }
@@ -122,7 +126,7 @@ motion_planning
         try{
             transform = tf_buffer_->lookupTransform(frame, global_plan_.header.frame_id, tf2::TimePointZero);
         }
-        catch(tf2::LookupException &ex)
+        catch(tf2::TransformException &ex)
         {
             RCLCPP_ERROR_STREAM(get_logger(), "Couldn't transform plan from frame " << global_plan_.header.frame_id << "to " << frame);
             return false;
@@ -133,18 +137,17 @@ motion_planning
             tf2::doTransform(pose, pose, transform);
         }
 
-        global_plan_.poses.header.frame_id = frame;
+        global_plan_.header.frame_id = frame;
         return true;
     }
 
     geometry_msgs::msg::PoseStamped PDMotionPlanner::getNextPose(const geometry_msgs::msg::PoseStamped & robot_pose)
     {
-        auto next_pose = global_pose_.poses.back();
-        for(auto pose_it = global_plan_.poses.rbegin(); pose_it != global_plan_.poses.rend(), ++pose_it)
+        auto next_pose = global_plan_.poses.back();
+        for(auto pose_it = global_plan_.poses.rbegin(); pose_it != global_plan_.poses.rend(); ++pose_it)
         {
-            double dx = pose_it->pose.postion.x - robot_pose.pose.position.x;
-            double dy = pose_it->pose.postion.y - robot_pose.pose.position.y;
-
+            double dx = pose_it->pose.position.x - robot_pose.pose.position.x;
+            double dy = pose_it->pose.position.y - robot_pose.pose.position.y;
             double distance = std::sqrt(dx * dx + dy * dy);
             if (distance > step_size_)
             {

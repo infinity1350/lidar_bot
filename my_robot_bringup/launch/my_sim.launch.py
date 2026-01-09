@@ -4,7 +4,6 @@ from launch.actions import (
     RegisterEventHandler,
     DeclareLaunchArgument,
     IncludeLaunchDescription,
-    EmitEvent,
     LogInfo,
     TimerAction
 )
@@ -13,8 +12,6 @@ from launch.substitutions import Command, FindExecutable, PathJoinSubstitution, 
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.actions import Node, LifecycleNode
 from launch_ros.substitutions import FindPackageShare
-from launch_ros.events.lifecycle import ChangeState
-from lifecycle_msgs.msg import Transition
 from ament_index_python.packages import get_package_share_directory
 import os
 
@@ -63,7 +60,7 @@ def generate_launch_description():
         description='Full path to world file (.world)'
     )
     
-    # NEW: Map yaml argument for navigation
+    # Map yaml argument for navigation
     map_yaml_arg = DeclareLaunchArgument(
         'map_yaml',
         default_value='/home/optimus/bumperbot_ws/src/bumperbot_mapping/maps/small_house/map.yaml',
@@ -128,7 +125,7 @@ def generate_launch_description():
         output='screen'
     )
 
-    # RViz (from original code)
+    # RViz
     rviz_node = Node(
         package="rviz2",
         executable="rviz2",
@@ -162,31 +159,21 @@ def generate_launch_description():
         arguments=["joint_state_broadcaster", "--controller-manager", "/controller_manager"],
     )
 
-    # Diff drive controller spawner (simple, no extra args)
+    # Diff drive controller spawner
     robot_controller_spawner = Node(
         package='controller_manager',
         executable='spawner',
         arguments=['diff_drive_controller', '--controller-manager', '/controller_manager'],
     )
 
-    # === NEW NAVIGATION COMPONENTS ===
+    # === NAVIGATION COMPONENTS ===
     
-    # Static TF: map -> odom
-    static_tf_map_odom = Node(
-        package='tf2_ros',
-        executable='static_transform_publisher',
-        name='static_tf_map_odom',
-        arguments=['0', '0', '0', '0', '0', '0', 'map', 'odom'],
-        parameters=[{'use_sim_time': use_sim_time}],
-        output='screen'
-    )
-
     # Map Server (Lifecycle Node)
     map_server = LifecycleNode(
         package='nav2_map_server',
         executable='map_server',
         name='map_server',
-        namespace='',  # Required parameter in ROS2 Humble
+        namespace='',
         output='screen',
         parameters=[{
             'yaml_filename': map_yaml,
@@ -194,9 +181,79 @@ def generate_launch_description():
         }]
     )
 
-    # === ORIGINAL DELAYED SPAWNERS ===
+    # AMCL (Lifecycle Node) - Provides map->odom transform
+    amcl = LifecycleNode(
+        package='nav2_amcl',
+        executable='amcl',
+        name='amcl',
+        namespace='',
+        output='screen',
+        parameters=[{
+            'use_sim_time': use_sim_time,
+            'alpha1': 0.2,
+            'alpha2': 0.2,
+            'alpha3': 0.2,
+            'alpha4': 0.2,
+            'alpha5': 0.2,
+            'base_frame_id': 'base_footprint',
+            'beam_skip_distance': 0.5,
+            'beam_skip_error_threshold': 0.9,
+            'beam_skip_threshold': 0.3,
+            'do_beamskip': False,
+            'global_frame_id': 'map',
+            'lambda_short': 0.1,
+            'laser_likelihood_max_dist': 2.0,
+            'laser_max_range': 12.0,  # YDLidar X4 Pro max range
+            'laser_min_range': 0.12,  # YDLidar X4 Pro min range
+            'laser_model_type': 'likelihood_field',
+            'max_beams': 60,
+            'max_particles': 2000,
+            'min_particles': 500,
+            'odom_frame_id': 'odom',
+            'pf_err': 0.05,
+            'pf_z': 0.99,
+            'recovery_alpha_fast': 0.0,
+            'recovery_alpha_slow': 0.0,
+            'resample_interval': 1,
+            'robot_model_type': 'nav2_amcl::DifferentialMotionModel',
+            'save_pose_rate': 0.5,
+            'sigma_hit': 0.2,
+            'tf_broadcast': True,  # This publishes map->odom transform
+            'transform_tolerance': 1.0,
+            'update_min_a': 0.2,
+            'update_min_d': 0.25,
+            'z_hit': 0.5,
+            'z_max': 0.05,
+            'z_rand': 0.5,
+            'z_short': 0.05,
+            'scan_topic': 'scan',
+            'set_initial_pose': True,
+            'initial_pose': {
+                'x': 0.0,
+                'y': 0.0,
+                'z': 0.0,
+                'yaw': 0.0
+            }
+        }]
+    )
+
+    # Lifecycle Manager for AUTOMATIC state transitions
+    # This will automatically configure and activate both map_server and amcl
+    lifecycle_manager = Node(
+        package='nav2_lifecycle_manager',
+        executable='lifecycle_manager',
+        name='lifecycle_manager_localization',
+        output='screen',
+        parameters=[{
+            'use_sim_time': use_sim_time,
+            'autostart': True,  # CRITICAL: This auto-configures and activates nodes
+            'node_names': ['map_server', 'amcl']
+        }]
+    )
+
+    # === DELAYED SPAWNERS ===
     
-    # Delayed RViz (from original code) - starts after joint_state_broadcaster
+    # Delayed RViz - starts after joint_state_broadcaster
     delay_rviz = RegisterEventHandler(
         event_handler=OnProcessExit(
             target_action=joint_state_broadcaster_spawner,
@@ -204,7 +261,7 @@ def generate_launch_description():
         )
     )
 
-    # Delayed robot controller (from original code)
+    # Delayed robot controller
     delay_robot_controller = RegisterEventHandler(
         event_handler=OnProcessExit(
             target_action=joint_state_broadcaster_spawner,
@@ -212,7 +269,7 @@ def generate_launch_description():
         )
     )
 
-    # Delayed spawn (from original code)
+    # Delayed spawn
     delay_spawn = RegisterEventHandler(
         event_handler=OnProcessExit(
             target_action=robot_state_pub_node,
@@ -220,66 +277,35 @@ def generate_launch_description():
         )
     )
 
-    # === NEW: Start navigation components after controllers are ready ===
-    
+    # Start navigation components after controllers are ready
+    # The lifecycle_manager will automatically transition map_server and amcl
     delay_navigation = RegisterEventHandler(
         event_handler=OnProcessExit(
             target_action=robot_controller_spawner,
             on_exit=[
                 LogInfo(msg='Controllers ready, starting navigation components...'),
                 TimerAction(
-                    period=2.0,
+                    period=3.0,  # Give 3 seconds for everything to stabilize
                     actions=[
-                        static_tf_map_odom,
+                        LogInfo(msg='Launching map_server...'),
                         map_server,
+                    ]
+                ),
+                TimerAction(
+                    period=4.0,  # Start AMCL 1 second after map_server
+                    actions=[
+                        LogInfo(msg='Launching AMCL...'),
+                        amcl,
+                    ]
+                ),
+                TimerAction(
+                    period=5.0,  # Start lifecycle_manager last
+                    actions=[
+                        LogInfo(msg='Launching lifecycle_manager (will auto-activate nodes)...'),
+                        lifecycle_manager,
                     ]
                 )
             ],
-        )
-    )
-
-    # === NEW: Map server lifecycle management ===
-    
-    # Configure map_server after it starts
-    configure_map_server = EmitEvent(
-        event=ChangeState(
-            lifecycle_node_matcher=lambda node: node.name == 'map_server',
-            transition_id=Transition.TRANSITION_CONFIGURE,
-        )
-    )
-
-    activate_map_server = EmitEvent(
-        event=ChangeState(
-            lifecycle_node_matcher=lambda node: node.name == 'map_server',
-            transition_id=Transition.TRANSITION_ACTIVATE,
-        )
-    )
-
-    configure_event_handler = RegisterEventHandler(
-        OnProcessStart(
-            target_action=map_server,
-            on_start=[
-                LogInfo(msg='Map server started, configuring...'),
-                TimerAction(
-                    period=2.0,
-                    actions=[configure_map_server]
-                )
-            ]
-        )
-    )
-
-    activate_event_handler = RegisterEventHandler(
-        OnProcessStart(
-            target_action=map_server,
-            on_start=[
-                TimerAction(
-                    period=4.0,
-                    actions=[
-                        LogInfo(msg='Activating map server...'),
-                        activate_map_server
-                    ]
-                )
-            ]
         )
     )
 
@@ -288,9 +314,9 @@ def generate_launch_description():
         # Arguments
         use_sim_time_arg,
         world_arg,
-        map_yaml_arg,  # NEW
+        map_yaml_arg,
         
-        # Original nodes
+        # Core nodes
         gazebo,
         robot_state_pub_node,
         bridge,
@@ -298,15 +324,11 @@ def generate_launch_description():
         spawn_entity,
         joint_state_broadcaster_spawner,
         
-        # Original event handlers
+        # Event handlers
         delay_rviz,
         delay_robot_controller,
         delay_spawn,
-        
-        # NEW: Navigation components and lifecycle management
         delay_navigation,
-        configure_event_handler,
-        activate_event_handler,
     ]
 
     return LaunchDescription(nodes)

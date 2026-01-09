@@ -5,14 +5,57 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
-# find dependencies
+# Find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
-find_package(geometry_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
 
-install(PROGRAMS)
+# Include directories
+include_directories(include)
+
+# Add executable
+add_executable(pd_motion_planner 
+  src/pd_motion_planner.cpp
+)
+
+# Specify dependencies for the executable
+ament_target_dependencies(pd_motion_planner
+  rclcpp
+  nav_msgs
+  geometry_msgs
+  tf2
+  tf2_ros
+  tf2_geometry_msgs
+)
+
+# Install executables
+install(TARGETS
+  pd_motion_planner
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+# Install include directory
+install(DIRECTORY include/
+  DESTINATION include
+)
+
+# Install launch files (if you have any)
+install(DIRECTORY
+  launch
+  DESTINATION share/${PROJECT_NAME}
+  OPTIONAL
+)
+
+# Install config files (if you have any)
+install(DIRECTORY
+  config
+  DESTINATION share/${PROJECT_NAME}
+  OPTIONAL
+)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
