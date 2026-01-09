@@ -12,6 +12,7 @@ from launch.substitutions import Command, FindExecutable, PathJoinSubstitution, 
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.actions import Node, LifecycleNode
 from launch_ros.substitutions import FindPackageShare
+from launch_ros.parameter_descriptions import ParameterValue
 from ament_index_python.packages import get_package_share_directory
 import os
 
@@ -79,7 +80,7 @@ def generate_launch_description():
         " ",
         "use_sim_time:=true",
     ])
-    robot_description = {"robot_description": robot_description_content}
+    robot_description = {"robot_description": ParameterValue(robot_description_content, value_type=str)}
 
     # Controller configuration
     robot_controllers = PathJoinSubstitution([
@@ -168,6 +169,17 @@ def generate_launch_description():
 
     # === NAVIGATION COMPONENTS ===
     
+    # Static transform: base_footprint -> laser frame
+    # This bridges the gap between Gazebo's namespaced laser and AMCL's expected frame
+    static_tf_laser = Node(
+        package='tf2_ros',
+        executable='static_transform_publisher',
+        name='static_tf_laser',
+        arguments=['0', '0', '0', '0', '0', '0', 'base_footprint', 'my_robot/base_footprint/laser'],
+        parameters=[{'use_sim_time': use_sim_time}],
+        output='screen'
+    )
+    
     # Map Server (Lifecycle Node)
     map_server = LifecycleNode(
         package='nav2_map_server',
@@ -195,7 +207,7 @@ def generate_launch_description():
             'alpha3': 0.2,
             'alpha4': 0.2,
             'alpha5': 0.2,
-            'base_frame_id': 'base_footprint',
+            'base_frame_id': 'base_footprint',  # Use non-namespaced frame
             'beam_skip_distance': 0.5,
             'beam_skip_error_threshold': 0.9,
             'beam_skip_threshold': 0.3,
@@ -209,7 +221,7 @@ def generate_launch_description():
             'max_beams': 60,
             'max_particles': 2000,
             'min_particles': 500,
-            'odom_frame_id': 'odom',
+            'odom_frame_id': 'odom',  # Use non-namespaced frame
             'pf_err': 0.05,
             'pf_z': 0.99,
             'recovery_alpha_fast': 0.0,
@@ -219,7 +231,7 @@ def generate_launch_description():
             'save_pose_rate': 0.5,
             'sigma_hit': 0.2,
             'tf_broadcast': True,  # This publishes map->odom transform
-            'transform_tolerance': 1.0,
+            'transform_tolerance': 2.0,  # Increased tolerance for Gazebo
             'update_min_a': 0.2,
             'update_min_d': 0.25,
             'z_hit': 0.5,
@@ -284,6 +296,13 @@ def generate_launch_description():
             target_action=robot_controller_spawner,
             on_exit=[
                 LogInfo(msg='Controllers ready, starting navigation components...'),
+                TimerAction(
+                    period=2.0,  # Give 2 seconds for everything to stabilize
+                    actions=[
+                        LogInfo(msg='Publishing static laser transform...'),
+                        static_tf_laser,
+                    ]
+                ),
                 TimerAction(
                     period=3.0,  # Give 3 seconds for everything to stabilize
                     actions=[

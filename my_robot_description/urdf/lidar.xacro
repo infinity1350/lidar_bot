@@ -43,7 +43,8 @@
         <sensor name="laser" type="gpu_lidar">
             <pose>0 0 0 0 0 0</pose>
             <topic>scan</topic>
-            <frame_id>laser_frame</frame_id>
+            <!-- CHANGED: Use ignition_frame_id to prevent auto-prefixing -->
+            <ignition_frame_id>laser_frame</ignition_frame_id>
             <update_rate>10</update_rate>
             <visualize>true</visualize>
             <lidar>
@@ -56,7 +57,7 @@
                     </horizontal>
                 </scan>
                 <range>
-                    <min>0.3</min>
+                    <min>0.12</min>  <!-- ALSO FIXED: Was 0.3, should be 0.12 for YDLidar X4 Pro -->
                     <max>12.0</max>
                     <resolution>0.01</resolution>
                 </range>

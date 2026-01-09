@@ -13,7 +13,7 @@ namespace motion_planning
         declare_parameter<double>("kd", kd_);
         declare_parameter<double>("step_size", step_size_);
         declare_parameter<double>("max_linear_velocity", max_linear_velocity_);
-        declare_parameter<double>("max_anular_velocity", max_angular_velocity_);
+        declare_parameter<double>("max_angular_velocity", max_angular_velocity_);
 
         kp_ = get_parameter("kp").as_double();
         kd_ = get_parameter("kd").as_double();
@@ -55,7 +55,7 @@ namespace motion_planning
         geometry_msgs::msg::TransformStamped robot_pose;
         try 
         {
-            tf_buffer_->lookupTransform(
+            robot_pose = tf_buffer_->lookupTransform(
                 "odom", "base_footprint", tf2::TimePointZero);
         }
         catch(const tf2::TransformException &ex)
