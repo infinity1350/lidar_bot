@@ -136,15 +136,6 @@ def generate_launch_description():
         parameters=[{'use_sim_time': True}]
     )
 
-    # Control node with remapping
-    control_node = Node(
-        package="controller_manager",
-        executable="ros2_control_node",
-        parameters=[robot_description, robot_controllers, {'use_sim_time': True}],
-        remappings=[('/diff_drive_controller/cmd_vel', '/cmd_vel')],
-        output="both"
-    )
-
     # Robot state publisher
     robot_state_pub_node = Node(
         package="robot_state_publisher",
@@ -339,7 +330,6 @@ def generate_launch_description():
         gazebo,
         robot_state_pub_node,
         bridge,
-        control_node,
         spawn_entity,
         joint_state_broadcaster_spawner,
         

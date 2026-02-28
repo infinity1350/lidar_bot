@@ -26,7 +26,7 @@ namespace motion_planning
             "dijkstra_path", 10, std::bind(&PDMotionPlanner::pathCallback, this, std::placeholders::_1));
 
         cmd_pub_ = this->create_publisher<geometry_msgs::msg::Twist>(
-            "/cmd_vel", 10);
+            "/diff_drive_controller/cmd_vel", 10);
 
         next_pose_pub_ = this->create_publisher<geometry_msgs::msg::PoseStamped>("/pd/next_pose", 10);
 
