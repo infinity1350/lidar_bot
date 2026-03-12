@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+<robot name="my_robot" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+    <!-- ============================================ -->
+    <!-- ARGUMENTS -->
+    <!-- ============================================ -->
+    <xacro:arg name="use_sim_time" default="false"/>
+    <xacro:arg name="is_sim" default="false"/>
+    
+    <!-- Convert arguments to properties -->
+    <xacro:property name="is_sim" value="$(arg is_sim)"/>
+
+    <!-- ============================================ -->
+    <!-- COMMON INCLUDES (Always loaded) -->
+    <!-- ============================================ -->
+    <xacro:include filename="common_properties.xacro" />
+    <xacro:include filename="mobile_base.xacro" />
+    <xacro:include filename="lidar.xacro" />
+
+    <!-- ============================================ -->
+    <!-- SIMULATION: Use Gazebo Plugins -->
+    <!-- ============================================ -->
+    <xacro:if value="${is_sim}">
+        <xacro:include filename="gazebo_control.xacro" />
+    </xacro:if>
+
+    <!-- ============================================ -->
+    <!-- HARDWARE: Use ros2_control -->
+    <!-- ============================================ -->
+    <xacro:unless value="${is_sim}">
+        <xacro:include filename="mobile_base.ros2_control.xacro" />
+    </xacro:unless>
+
+</robot>

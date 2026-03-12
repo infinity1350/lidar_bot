@@ -1,0 +1,78 @@
+amcl:
+  ros__parameters:
+    use_sim_time: true
+    
+    # Frame IDs
+    global_frame_id: map
+    odom_frame_id: odom
+    base_frame_id: base_footprint
+    
+    # Transform broadcasting
+    tf_broadcast: true
+    transform_tolerance: 1.0
+    
+    # Laser scanner settings (YDLidar X4 Pro specs)
+    scan_topic: scan
+    laser_max_range: 12.0  # Max range of YDLidar X4 Pro
+    laser_min_range: 0.12  # Min range of YDLidar X4 Pro
+    max_beams: 60
+    laser_model_type: likelihood_field
+    
+    # Particle filter parameters
+    min_particles: 500
+    max_particles: 2000
+    pf_err: 0.05
+    pf_z: 0.99
+    resample_interval: 1
+    
+    # Motion model (differential drive)
+    robot_model_type: nav2_amcl::DifferentialMotionModel
+    alpha1: 0.2  # Rotation noise from rotation
+    alpha2: 0.2  # Rotation noise from translation
+    alpha3: 0.2  # Translation noise from translation
+    alpha4: 0.2  # Translation noise from rotation
+    alpha5: 0.2  # Translation noise from strafe
+    
+    # Update thresholds
+    update_min_d: 0.25  # Minimum translation before update (meters)
+    update_min_a: 0.2   # Minimum rotation before update (radians)
+    
+    # Likelihood field model
+    z_hit: 0.5
+    z_rand: 0.5
+    z_max: 0.05
+    z_short: 0.05
+    sigma_hit: 0.2
+    laser_likelihood_max_dist: 2.0
+    
+    # Beam skip (disabled for better accuracy)
+    do_beamskip: false
+    beam_skip_distance: 0.5
+    beam_skip_threshold: 0.3
+    beam_skip_error_threshold: 0.9
+    
+    # Recovery behaviors
+    recovery_alpha_slow: 0.0
+    recovery_alpha_fast: 0.0
+    
+    # Initial pose (starting position)
+    set_initial_pose: true
+    initial_pose:
+      x: 0.0
+      y: 0.0
+      z: 0.0
+      yaw: 0.0
+    
+    # Pose saving
+    save_pose_rate: 0.5
+
+map_server:
+  ros__parameters:
+    use_sim_time: true
+    yaml_filename: /home/optimus/bumperbot_ws/src/bumperbot_mapping/maps/small_house/map.yaml
+
+lifecycle_manager_localization:
+  ros__parameters:
+    use_sim_time: true
+    autostart: true
+    node_names: ['map_server', 'amcl']
