@@ -13,7 +13,7 @@ def generate_launch_description():
     # ── Launch arguments ──────────────────────────────────────────────────────
     use_sim_time_arg = DeclareLaunchArgument(
         'use_sim_time',
-        default_value='false',
+        default_value='true',
         description='Use simulation clock (true for Gazebo, false for real robot)',
     )
 
