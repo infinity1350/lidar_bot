@@ -137,8 +137,8 @@ def generate_launch_description():
             'use_sim_time': use_sim_time,
             'autostart': True,
             'node_names': [
-                'map_server',
-                'amcl',
+                # 'map_server',
+                # 'amcl',
                 'controller_server',
                 'smoother_server',
                 'planner_server',
@@ -153,10 +153,10 @@ def generate_launch_description():
     # ── Assemble ──────────────────────────────────────────────────────────────
     return LaunchDescription([
         use_sim_time_arg,
-        map_yaml_arg,
+        # map_yaml_arg,
         params_file_arg,
-        map_server,
-        amcl,
+        # map_server,
+        # amcl,
         controller_server,
         smoother_server,
         planner_server,

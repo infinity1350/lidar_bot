@@ -268,7 +268,7 @@ def generate_launch_description():
         # Arguments
         use_sim_time_arg,
         world_arg,
-        # map_yaml_arg,
+        map_yaml_arg,
         
         # Core nodes (start immediately)
         robot_state_pub_node,
@@ -279,7 +279,7 @@ def generate_launch_description():
         
         # Navigation nodes (with delays)
         static_tf_laser,
-        # map_server,
-        # amcl,
-        # lifecycle_manager,
+        map_server,
+        amcl,
+        lifecycle_manager,
     ])
