@@ -1,7 +1,7 @@
 twist_mux:
   ros__parameters:
-    # Use stamped messages to match controller
-    use_stamped: true
+    # Nav2 publishes geometry_msgs/Twist (not TwistStamped); gz_bridge also expects Twist
+    use_stamped: false
     
     topics:
       # Keyboard teleop - lowest priority for manual control
