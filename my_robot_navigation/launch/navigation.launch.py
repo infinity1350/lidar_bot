@@ -63,8 +63,8 @@ def generate_launch_description():
         name='controller_server',
         namespace='',
         output='screen',
-        # Nav2 outputs cmd_vel; remap to nav_vel so twist_mux handles priority
-        remappings=[('cmd_vel', 'nav_vel')],
+        # Nav2 outputs cmd_vel; remap to cmd_vel_nav so velocity_smoother can smooth it
+        remappings=[('cmd_vel', 'cmd_vel_nav')],
         parameters=[params_file, {'use_sim_time': use_sim_time}],
     )
 
@@ -120,7 +120,7 @@ def generate_launch_description():
         namespace='',
         output='screen',
         remappings=[
-            ('cmd_vel', 'nav_vel'),
+            ('cmd_vel', 'cmd_vel_nav'),
             ('cmd_vel_smoothed', 'cmd_vel'),
         ],
         parameters=[params_file, {'use_sim_time': use_sim_time}],
