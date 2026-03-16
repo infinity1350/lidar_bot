@@ -18,7 +18,7 @@ twist_mux:
         
       # Navigation stack - high priority for autonomous driving
       navigation:
-        topic: cmd_vel_nav
+        topic: cmd_vel_smooth
         timeout: 1.0
         priority: 50
         
