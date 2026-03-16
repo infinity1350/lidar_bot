@@ -65,7 +65,7 @@ def generate_launch_description():
     # Map yaml argument for navigation
     map_yaml_arg = DeclareLaunchArgument(
         'map_yaml',
-        default_value='/home/optimus/bumperbot_ws/src/bumperbot_mapping/maps/small_house/map.yaml',
+        default_value='/home/optimus/cntrl_ws/src/my_robot_navigation/maps/small_house/map.yaml',
         description='Full path to map yaml file'
     )
 

@@ -6,7 +6,7 @@ twist_mux:
     topics:
       # Keyboard teleop - lowest priority for manual control
       keyboard:
-        topic: cmd_vel
+        topic: key_vel
         timeout: 0.5
         priority: 10
       

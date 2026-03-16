@@ -14,8 +14,8 @@
       <right_joint>base_right_wheel_joint</right_joint>
       
       <!-- Wheel separation and radius -->
-      <wheel_separation>0.35</wheel_separation>  <!-- Adjust to your robot -->
-      <wheel_radius>0.033</wheel_radius>         <!-- Adjust to your robot -->
+      <wheel_separation>0.45</wheel_separation>  <!-- Adjust to your robot -->
+      <wheel_radius>0.1</wheel_radius>         <!-- Adjust to your robot -->
       
       <!-- Odometry -->
       <odom_publish_frequency>30</odom_publish_frequency>
