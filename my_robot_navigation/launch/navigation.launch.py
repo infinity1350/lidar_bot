@@ -120,8 +120,8 @@ def generate_launch_description():
         namespace='',
         output='screen',
         remappings=[
-            ('cmd_vel', 'cmd_vel_nav'),
-            ('cmd_vel_smoothed', 'cmd_vel_smooth'),
+            ('cmd_vel', 'cmd_vel_muxed'),
+            ('cmd_vel_smoothed', 'cmd_vel'),
         ],
         parameters=[params_file, {'use_sim_time': use_sim_time}],
     )
