@@ -136,6 +136,17 @@ def generate_launch_description():
         output='screen'
     )
 
+    # twist_mux configuration
+    twist_mux_params = os.path.join(get_package_share_directory(package_name), 'config', 'twist_mux.yaml')
+    twist_mux = Node(
+        package='twist_mux',
+        executable='twist_mux',
+        name='twist_mux',
+        output='screen',
+        parameters=[twist_mux_params],
+        remappings=[('cmd_vel_out', 'cmd_vel')],
+    )
+
     # Bridge configuration
     bridge_params = os.path.join(get_package_share_directory(package_name), 'config', 'gz_bridge.yaml')
     ros_ign_bridge = Node(
@@ -275,6 +286,7 @@ def generate_launch_description():
         gazebo,
         spawn_entity,
         ros_ign_bridge,
+        twist_mux,
         rviz_node,
         
         # Navigation nodes (with delays)
