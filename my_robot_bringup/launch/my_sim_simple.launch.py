@@ -163,24 +163,9 @@ def generate_launch_description():
     )
 
     # === NAVIGATION COMPONENTS (with delays) ===
-    
-    # Static transform: map -> odom (identity, used as fallback before AMCL activates)
-    # robot_state_publisher already handles base_footprint->base_link->laser_frame from the URDF.
-    # The old 'base_footprint'->'my_robot/base_footprint/laser' transform was wrong and useless.
-    static_tf_laser = TimerAction(
-        period=5.0,
-        actions=[
-            Node(
-                package='tf2_ros',
-                executable='static_transform_publisher',
-                name='static_tf_map_odom',
-                arguments=['0', '0', '0', '0', '0', '0', 'map', 'odom'],
-                parameters=[{'use_sim_time': use_sim_time}],
-                output='screen'
-            )
-        ]
-    )
-    
+    # NOTE: No static map->odom TF here. AMCL is the sole publisher of map->odom.
+    #       A static map->odom would conflict with AMCL and break the controller.
+
     # Map Server (Lifecycle Node)
     map_server = TimerAction(
         period=6.0,
@@ -294,7 +279,6 @@ def generate_launch_description():
         rviz_node,
         
         # Navigation nodes (with delays)
-        static_tf_laser,
         map_server,
         amcl,
         lifecycle_manager,
