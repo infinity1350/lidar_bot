@@ -144,7 +144,7 @@ def generate_launch_description():
         name='twist_mux',
         output='screen',
         parameters=[twist_mux_params],
-        remappings=[('cmd_vel_out', 'cmd_vel_muxed')],
+        remappings=[('cmd_vel_out', 'cmd_vel')],
     )
 
     # Bridge configuration
