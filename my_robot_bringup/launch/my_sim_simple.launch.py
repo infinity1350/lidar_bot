@@ -65,7 +65,9 @@ def generate_launch_description():
     # Map yaml argument for navigation
     map_yaml_arg = DeclareLaunchArgument(
         'map_yaml',
-        default_value='/home/optimus/cntrl_ws/src/my_robot_navigation/maps/small_house/map.yaml',
+        default_value=os.path.join(
+            get_package_share_directory('my_robot_navigation'), 'maps', 'small_house', 'map.yaml'
+        ),
         description='Full path to map yaml file'
     )
 
@@ -162,15 +164,17 @@ def generate_launch_description():
 
     # === NAVIGATION COMPONENTS (with delays) ===
     
-    # Static transform: base_footprint -> laser frame
+    # Static transform: map -> odom (identity, used as fallback before AMCL activates)
+    # robot_state_publisher already handles base_footprint->base_link->laser_frame from the URDF.
+    # The old 'base_footprint'->'my_robot/base_footprint/laser' transform was wrong and useless.
     static_tf_laser = TimerAction(
         period=5.0,
         actions=[
             Node(
                 package='tf2_ros',
                 executable='static_transform_publisher',
-                name='static_tf_laser',
-                arguments=['0', '0', '0', '0', '0', '0', 'base_footprint', 'my_robot/base_footprint/laser'],
+                name='static_tf_map_odom',
+                arguments=['0', '0', '0', '0', '0', '0', 'map', 'odom'],
                 parameters=[{'use_sim_time': use_sim_time}],
                 output='screen'
             )

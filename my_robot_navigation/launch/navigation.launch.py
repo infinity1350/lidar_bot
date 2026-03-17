@@ -19,7 +19,9 @@ def generate_launch_description():
 
     map_yaml_arg = DeclareLaunchArgument(
         'map_yaml',
-        default_value='/home/optimus/cntrl_ws/src/my_robot_navigation/maps/small_house/map.yaml',
+        default_value=os.path.join(
+            get_package_share_directory('my_robot_navigation'), 'maps', 'small_house', 'map.yaml'
+        ),
         description='Full path to the map yaml file',
     )
 
